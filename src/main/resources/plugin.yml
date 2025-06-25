@@ -1,0 +1,13 @@
+name: TestPlugin2
+version: '1.0-SNAPSHOT'
+main: org.comma6760.MyPlugin.Main.Main
+api-version: '1.21'
+
+commands:
+  select_team:
+    description: 팀 선택 상자를 받습니다
+    usage: /select_team
+  core_take:
+    description: 팀 코어 설정용 현수막을 지급합니다.
+    usage: /core_take <red|blue|green|all>
+
