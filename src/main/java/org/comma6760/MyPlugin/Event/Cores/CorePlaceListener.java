@@ -18,6 +18,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.comma6760.MyPlugin.Utils.CoreHealthManager;
 import org.jetbrains.annotations.NotNull;
+import org.comma6760.MyPlugin.Utils.TeamNameManager;
 
 import java.util.Objects;
 
@@ -60,26 +61,18 @@ public class CorePlaceListener implements Listener {
 
         // 해당 팀에 이미 코어가 설치되어 있으면 설치 불가 처리
         if (CoreHealthManager.hasCoreForTeam(teamId)) {
-            // 팀 이름(한국어) 매핑
-            String teamName = switch (teamId) {
-                case "red" -> "빨간";
-                case "blue" -> "파란";
-                case "green" -> "초록";
-                default -> "";
-            };
+            String teamName = TeamNameManager.getTeamName(teamId);
 
-            // 플레이어에게 중복 설치 불가 메시지 출력
-            player.sendActionBar(Component.text("이미 " + teamName + " 팀의 코어가 설치되어 있습니다!", NamedTextColor.RED));
+            player.sendActionBar(Component.text("이미 " + teamName + "의 코어가 설치되어 있습니다!", NamedTextColor.RED));
 
-            // 노트블럭 베이스드럼 소리 재생 (음높이 0.5)
             player.playSound(
                     player.getLocation(),
                     org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASEDRUM,
-                    1.0f,      // 볼륨
-                    12 / 24f   // 음높이 0.5 (12번째 음계)
+                    1.0f,
+                    12 / 24f
             );
 
-            event.setCancelled(true); // 이벤트 취소
+            event.setCancelled(true);
             return;
         }
 
@@ -115,16 +108,21 @@ public class CorePlaceListener implements Listener {
 
         // 엔더 크리스탈 생성 (코어 시각 효과)
         EnderCrystal crystal = player.getWorld().spawn(placeLocation, EnderCrystal.class);
-        crystal.setShowingBottom(false); // 엔더 크리스탈 바닥 제거
+        crystal.setShowingBottom(false);                      // 바닥 제거
+        crystal.setInvulnerable(true);                        // 피해 무효화 → 폭발 방지
+        crystal.setSilent(true);                              // (선택) 소리 제거
+        crystal.setGravity(false);                            // (선택) 중력 제거
+        crystal.customName(Component.text("TeamCoreCrystal")); // 이름 설정 (Component 기반)
+        crystal.setCustomNameVisible(false);                   // 이름 숨김
 
         // Interaction 엔티티 생성 (코어 판정을 위한 실제 엔티티)
         Location interactionLoc = placeLocation.clone().subtract(0, 0.005, 0);
         Interaction interaction = (Interaction) player.getWorld().spawnEntity(interactionLoc, EntityType.INTERACTION);
         interaction.setInteractionWidth(2.029f);   // 상호작용 영역 너비
         interaction.setInteractionHeight(2.029f);  // 상호작용 영역 높이
-        interaction.setInvulnerable(true);          // 공격 불가능 설정
+        interaction.setInvulnerable(true);         // 공격 불가능 설정
 
-        // 코어로 등록 (체력 초기값 10)
+        // 코어로 등록 (체력 초기값 100)
         CoreHealthManager.registerCore(interaction, crystal, 100, teamId);
 
         event.setCancelled(true); // 블록 설치 이벤트 취소 (중복 처리 방지)

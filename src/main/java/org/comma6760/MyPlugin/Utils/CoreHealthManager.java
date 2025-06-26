@@ -2,11 +2,7 @@ package org.comma6760.MyPlugin.Utils;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.Bukkit;
-import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.Location;
+import org.bukkit.*;
 import org.bukkit.entity.EnderCrystal;
 import org.bukkit.entity.Interaction;
 
@@ -28,7 +24,6 @@ public class CoreHealthManager {
 
     // 경고 메시지를 이미 보냈는지 추적
     private static final Map<UUID, Boolean> warnedMap = new HashMap<>();
-
 
     /**
      * 코어 엔티티와 관련 데이터를 새로 등록
@@ -75,11 +70,17 @@ public class CoreHealthManager {
         int newHealth = currentHealth - (int) damage;
         if (newHealth < 0) newHealth = 0;
 
-        // 경고 메시지를 한 번만 출력
         if (currentHealth > 50 && newHealth <= 50 && !warnedMap.getOrDefault(id, false)) {
             String teamId = getTeamId(interaction);
-            Bukkit.broadcast(Component.text("경고! " + teamId + " 팀의 코어 체력이 50 이하입니다!", NamedTextColor.RED));
-            warnedMap.put(id, true); // 경고 상태 기록
+            String teamDisplayName = switch (teamId) {
+                case "red" -> "빨강 팀";
+                case "blue" -> "파랑 팀";
+                case "green" -> "초록 팀";
+                default -> teamId + " 팀";  // 혹시 모를 기본 처리
+            };
+
+            Bukkit.broadcast(Component.text("경고! " + teamDisplayName + " 코어 체력이 50 이하입니다!", NamedTextColor.RED));
+            warnedMap.put(id, true);
         }
 
         healthMap.put(id, newHealth);
@@ -97,8 +98,10 @@ public class CoreHealthManager {
         World world = loc.getWorld();
 
         if (world != null) {
-            world.spawnParticle(Particle.EXPLOSION, loc, 1);   // 폭발 파티클
-            world.playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1f, 1f); // 폭발 소리
+            // 폭발 파티클
+            world.spawnParticle(Particle.EXPLOSION, loc, 1);
+            // 엔더 드래곤 사망 사운드 재생 (볼륨 1, 피치 1)
+            world.playSound(loc, "minecraft:entity.ender_dragon.death", SoundCategory.MASTER, 1f, 1f);
         }
 
         interaction.remove();  // 코어 Interaction 제거
@@ -110,11 +113,12 @@ public class CoreHealthManager {
         coreMap.remove(id);
         healthMap.remove(id);
         teamMap.remove(id);
-        warnedMap.remove(id); // 경고 상태도 함께 삭제
+        warnedMap.remove(id);
 
         // 모든 플레이어에게 코어 파괴 메시지 방송
         Bukkit.broadcast(Component.text("코어가 파괴되었습니다!", NamedTextColor.GOLD));
     }
+
 
     /**
      * 코어가 속한 팀 식별자 반환

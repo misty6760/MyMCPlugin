@@ -10,4 +10,6 @@ commands:
   core_take:
     description: 팀 코어 설정용 현수막을 지급합니다.
     usage: /core_take <red|blue|green|all>
-
+  team_name_change:
+    description: 팀 이름을 변경합니다.
+    usage: /team_name_change <red|blu|green> <새 이름>
